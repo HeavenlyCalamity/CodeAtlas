@@ -1,0 +1,23 @@
+# Build output and dependencies
+backend/target/
+client/node_modules/
+client/.next/
+client/out/
+
+# Local secrets and environment overrides
+.env
+.env.*
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-*.properties
+
+# IDE and OS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs and local tooling
+*.log
+npm-debug.log*
+client/*.tsbuildinfo
