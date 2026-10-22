@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter,useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import {AlertCircle} from "lucide-react";
-
+import { useCurrentUser } from "@/hooks/use-auth";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { BrandMark} from "@/components/layout/app-shell";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -29,10 +29,15 @@ const LoginContent = () => {
     const router = useRouter();
     const error = params.get("error");
     const next = params.get("next") || "/dashboard";
+    const { data: user, isLoading } = useCurrentUser();
 
-    const user = null;
-    const isLoading = false;
-    if (isLoading || !user) {
+    useEffect(() =>{
+        if (!isLoading && user) {
+            router.replace(next.startsWith("/") ? next : "/dashboard");
+        }
+        }, [user, isLoading, next, router]);
+
+    if (isLoading || user) {
         return <LoginLoading/>
     }
 
@@ -49,12 +54,12 @@ const LoginContent = () => {
 
             <main className="relative z-10 flex flex-1 justify-center items-center px-4 py-10">
                 <Card className="w-full max-w-sm border-border/70 bg-card/90 shadow-lg shadow-foreground/5 backdrop-blur-xl">
-                    <CardHeader className="space-y-4 text-center" >
-                        <div className="mx-auto flex size-12 items-center justify-center rounded-2x1 bg-foreground text-background" >
+                    <CardHeader className="space-y-4 text-center">
+                        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-foreground text-background">
                             <GithubIcon className="size-6" />
+                        </div>
                         <CardTitle className="text-xl">Sign in</CardTitle>
                         <CardDescription>Sign in to your account</CardDescription>
-                        </div>
                     </CardHeader>
 
                     <CardContent className="space-y-4">
@@ -68,7 +73,7 @@ const LoginContent = () => {
 
                         <a href={getGithubLoginUrl()} className={cn(
                             buttonVariants({ size: "lg" }),
-                            "inline-flex w-full items-center justify-center gap-2 bg-foreground text-background hover : bg-foreground/90")}>
+                            "inline-flex w-full items-center justify-center gap-2 bg-foreground text-background hover:bg-foreground/90")}>
                             <GithubIcon className="size-5" />
                             Sign in with GitHub
                         </a>

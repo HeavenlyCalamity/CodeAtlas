@@ -15,11 +15,13 @@ export class ApiError extends Error {
 }
 
 export function getApiBaseUrl() {
-    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";}
+    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
+}
 
 
 export function getGithubLoginUrl() {
-    return `${getApiBaseUrl()}/oauth2/authorization/github`;
+    const backendUrl = getApiBaseUrl().replace(/\/api\/?$/, "");
+    return `${backendUrl}/oauth2/authorization/github`;
 }
 
 async function parseError(res: Response): Promise<string> {
@@ -50,6 +52,6 @@ export async function apiFetch<T>(
 }
 
 export const api = {
-    me: () => apiFetch<User>("/api/auth/me"),
-    logout: () => apiFetch<void>("/api/auth/logout",{ method: "POST" }),
+    me: () => apiFetch<User>("/auth/me"),
+    logout: () => apiFetch<void>("/auth/logout",{ method: "POST" }),
 }
