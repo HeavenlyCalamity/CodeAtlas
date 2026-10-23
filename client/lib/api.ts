@@ -1,3 +1,33 @@
+export type IndexStatus = "PENDING" | "INDEXING" | "READY" | "FAILED";
+
+export type Repository = {
+    id: string;
+    name: string;
+    owner: string;
+    fullName: string;
+    description: string | null;
+    url: string;
+    defaultBranch: string;
+    language: string | null;
+    htmlUrl: string | null;
+    chunkCount: number;
+    filesTotal: number;
+    filesProcessed: number;
+    isPrivate: boolean;
+    indexStatus: IndexStatus;
+    errorMessage: string | null;
+};
+
+export type IndexStatusresponse = {
+    repositoryId: string;
+    indexStatus: IndexStatus;
+    filesTotal: number;
+    filesProcessed: number;
+    chunkCount: number;
+    indexedAt: string | null;
+    errorMessage: string | null;
+};
+
 export type User = {
     id: string;
     githubId: number;
@@ -54,4 +84,10 @@ export async function apiFetch<T>(
 export const api = {
     me: () => apiFetch<User>("/auth/me"),
     logout: () => apiFetch<void>("/auth/logout",{ method: "POST" }),
+
+    listRepos: (refresh = true) => apiFetch<Repository[]>(`/repos?refresh=${refresh}`),
+    getRepo: (id: string) => apiFetch<Repository>(`/repos/${id}`),
+    startIndex: (id: string) => apiFetch<void>(`/repos/${id}/index`, {method: "POST"}),
+    deleteRepo: (repoId: string) => apiFetch<void>(`/repos/${repoId}`, {method: "DELETE"}),
+    indexStatus: (id: string) => apiFetch<IndexStatusresponse>(`/repos/${id}/status`),
 }

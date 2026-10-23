@@ -2,6 +2,7 @@ package devPilot.backend.services.github;
 
 import devPilot.backend.dto.IndexStatusResponse;
 import devPilot.backend.dto.RepositoryResponse;
+import devPilot.backend.entity.IndexStatus;
 import devPilot.backend.entity.Repository;
 import devPilot.backend.entity.User;
 import devPilot.backend.exceptions.NotFoundException;
@@ -10,16 +11,12 @@ import devPilot.backend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -96,6 +93,44 @@ public class RepoService {
         repo.getIndexedAt(),
         repo.getErrorMessage());
 
+    }
+
+    @Transactional(noRollbackFor = RuntimeException.class)
+    public void startIndexing(UUID repoId, UUID userId) {
+        Repository repo = requireOwned(repoId, userId);
+        User user = userService.requiredById(userId);
+        repo.setIndexStatus(IndexStatus.INDEXING);
+        repo.setErrorMessage(null);
+        repo.setFilesProcessed(0);
+        repo.setChunkCount(0);
+        repositoryRepository.save(repo);
+
+        try {
+            Map<String, Object> treeResponse = githubApiClient.getRepoTree(
+                    userService.decryptAccessToken(user),
+                    repo.getOwner(),
+                    repo.getName(),
+                    repo.getDefaultBranch());
+            Object treeValue = treeResponse == null ? null : treeResponse.get("tree");
+            int files = 0;
+            if (treeValue instanceof List<?> tree) {
+                for (Object entry : tree) {
+                    if (entry instanceof Map<?, ?> item && "blob".equals(item.get("type"))) {
+                        files++;
+                    }
+                }
+            }
+            repo.setFilesTotal(files);
+            repo.setFilesProcessed(files);
+            repo.setIndexStatus(IndexStatus.READY);
+            repo.setIndexedAt(Instant.now());
+        } catch (RuntimeException ex) {
+            repo.setIndexStatus(IndexStatus.FAILED);
+            repo.setErrorMessage(ex.getMessage() == null ? "Repository indexing failed" : ex.getMessage());
+            throw ex;
+        } finally {
+            repositoryRepository.save(repo);
+        }
     }
 
     public RepositoryResponse toResponse(Repository repo) {

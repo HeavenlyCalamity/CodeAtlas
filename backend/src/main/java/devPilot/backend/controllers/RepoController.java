@@ -3,7 +3,6 @@ package devPilot.backend.controllers;
 import devPilot.backend.dto.IndexStatusResponse;
 import devPilot.backend.dto.RepositoryResponse;
 import devPilot.backend.security.CurrentUser;
-import devPilot.backend.services.UserService;
 import devPilot.backend.services.github.RepoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +16,6 @@ import java.util.UUID;
 public class RepoController {
     private final CurrentUser currentUser;
     private final RepoService repoService;
-    private final UserService userService;
 
     @GetMapping
     public List<RepositoryResponse> list(
@@ -39,5 +37,11 @@ public class RepoController {
     public IndexStatusResponse status(@PathVariable UUID id) {
         UUID userId = currentUser.require().getId();
         return repoService.status(id, userId);
+    }
+
+    @PostMapping("/{id}/index")
+    public void startIndexing(@PathVariable UUID id) {
+        UUID userId = currentUser.require().getId();
+        repoService.startIndexing(id, userId);
     }
 }

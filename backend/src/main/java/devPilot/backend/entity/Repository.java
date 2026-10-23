@@ -9,7 +9,9 @@ import java.util.UUID;
 
 @Builder
 @Entity
-@Table(name = "repositories",uniqueConstraints = @UniqueConstraint(columnNames = {"user-id","github_repo_id"}))
+@Table(name = "repositories", uniqueConstraints = @UniqueConstraint(
+        name = "uk_repositories_user_github_repo",
+        columnNames = {"user_id", "github_repo_id"}))
 @Getter
 @Setter
 @AllArgsConstructor
@@ -22,7 +24,7 @@ public class Repository {
     @Column(name = "user_id",nullable = false)
     private UUID userId;
 
-    @Column(name = "github_repo_id",nullable = false,unique = true)
+    @Column(name = "github_repo_id", nullable = false)
     private Long githubRepoId;
 
     @Column(nullable = false,length = 100)
@@ -80,6 +82,11 @@ public class Repository {
         if (indexStatus == null) {
             indexStatus = IndexStatus.PENDING;
         }
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = Instant.now();
     }
 
 }
