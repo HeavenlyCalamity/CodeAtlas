@@ -28,12 +28,24 @@ public class CitationMapper {
 
     }
 
-    private String stringVal(Object filePath) {
-        return filePath != null ? filePath.toString() : null;
+    private static String stringVal(Object value) {
+        return value == null ? null : String.valueOf(value);
+
     }
 
-    private Integer intVal(Object line) {
-        return line != null ? Integer.valueOf(line.toString()) : null;
+    private static Integer intVal(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
     }
 
     public String toJson(List<CitationDto> citations) {
@@ -41,6 +53,15 @@ public class CitationMapper {
             return jsonMapper.writeValueAsString(citations);
         } catch (JacksonException e) {
             return "[]";
+        }
+    }
+
+    public List<CitationDto> fromJson(String citations)
+    {
+        try {
+            return jsonMapper.readValue(citations, new TypeReference<List<CitationDto>>() {});
+        } catch (JacksonException e) {
+            return List.of();
         }
     }
 }

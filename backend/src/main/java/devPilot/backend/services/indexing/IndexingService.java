@@ -4,7 +4,7 @@ import devPilot.backend.entity.IndexStatus;
 import devPilot.backend.entity.Repository;
 import devPilot.backend.exceptions.BadRequestException;
 import devPilot.backend.exceptions.NotFoundException;
-import devPilot.backend.repositoty.RepositoryRepository;
+import devPilot.backend.repository.RepositoryRepository;
 import devPilot.backend.services.UserService;
 import devPilot.backend.services.ai.RagSettings;
 import devPilot.backend.services.github.GithubApiClient;

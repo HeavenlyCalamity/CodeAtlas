@@ -1,4 +1,4 @@
-package devPilot.backend.repositoty;
+package devPilot.backend.repository;
 
 import devPilot.backend.entity.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
