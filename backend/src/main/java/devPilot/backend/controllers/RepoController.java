@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/repos")
@@ -43,18 +44,18 @@ public class RepoController {
         UUID userId = currentUser.require().getId();
         return repoService.status(id, userId);
     }
+
+    @PostMapping("/import")
+    public RepositoryResponse importRepository(@RequestBody Map<String, String> request) {
+        UUID userId = currentUser.require().getId();
+        return repoService.importFromUrl(userId, request.get("url"));
+    }
+
     @PostMapping("/{id}/index")
     public ResponseEntity<RepositoryResponse> index(@PathVariable UUID id) {
         UUID userId = currentUser.require().getId();
         Repository repo = indexingService.startIndexing(id, userId);
         indexingService.indexAsync(id, userId);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(repoService. toResponse(repo));
-
-    }
-
-    @PostMapping("/{id}/index")
-    public void startIndexing(@PathVariable UUID id) {
-        UUID userId = currentUser.require().getId();
-        repoService.startIndexing(id, userId);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(repoService.toResponse(repo));
     }
 }

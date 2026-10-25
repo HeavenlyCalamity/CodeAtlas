@@ -4,9 +4,6 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
-  Boxes,
-  Check,
-  CircleDashed,
   GitBranch,
   Lock,
   MessageSquare,
@@ -58,25 +55,18 @@ export function RepoCard({ repo }: { repo: Repository }) {
           {repo.description || "No description provided."}
         </p>
 
-        <div className="flex flex-wrap gap-2">
-          <Tag tone="blue" icon={<GitBranch className="text-blue-600" />} text={repo.defaultBranch || "main"} />
+        <div className="flex flex-wrap gap-1.5">
+          <Tag icon={<GitBranch />} text={repo.defaultBranch || "main"} />
           <Tag
-            tone={repo.isPrivate ? "amber" : "emerald"}
-            icon={<Lock className={repo.isPrivate ? "text-amber-600" : "text-emerald-600"} />}
+            icon={<Lock />}
             text={repo.isPrivate ? "Private" : "Public"}
           />
           {repo.language && (
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
+            <span className="inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               <LanguageBadge language={repo.language} showLabel={false} />
               <span className="truncate">{repo.language}</span>
             </span>
           )}
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          <Metric tone="blue" icon={<CircleDashed className="text-blue-600" />} value={repo.filesTotal.toLocaleString()} label="Files" />
-          <Metric tone="violet" icon={<Boxes className="text-violet-600" />} value={repo.chunkCount.toLocaleString()} label="Chunks" />
-          <Metric tone="emerald" icon={<Check className="text-emerald-600" />} value={repo.filesProcessed.toLocaleString()} label="Indexed" />
         </div>
 
         {indexing && (
@@ -143,55 +133,18 @@ export function RepoCard({ repo }: { repo: Repository }) {
 function Tag({
   icon,
   text,
-  tone,
 }: {
   icon?: ReactNode;
   text: string;
-  tone: "blue" | "violet" | "amber" | "emerald";
 }) {
   return (
     <span
       className={cn(
-        "inline-flex max-w-full cursor-default items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium",
-        tone === "blue" && "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-        tone === "violet" && "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
-        tone === "amber" && "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-        tone === "emerald" && "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+        "inline-flex max-w-full cursor-default items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground",
       )}
     >
       {icon && <span className="[&_svg]:size-3.5">{icon}</span>}
       <span className="truncate">{text}</span>
     </span>
-  );
-}
-
-function Metric({
-  icon,
-  value,
-  label,
-  tone,
-}: {
-  icon: ReactNode;
-  value: string;
-  label: string;
-  tone: "blue" | "violet" | "emerald";
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-muted/20 px-2.5 py-2">
-      <span
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-lg [&_svg]:size-3.5",
-          tone === "blue" && "bg-blue-500/15 text-blue-600",
-          tone === "violet" && "bg-violet-500/15 text-violet-600",
-          tone === "emerald" && "bg-emerald-500/15 text-emerald-600",
-        )}
-      >
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-xs font-semibold">{value}</span>
-        <span className="block truncate text-[10px] text-muted-foreground">{label}</span>
-      </span>
-    </div>
   );
 }

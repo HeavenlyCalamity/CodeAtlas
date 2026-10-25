@@ -2,6 +2,7 @@ import {
     FolderGit2,
     LayoutGrid,
     Settings,
+    UserRound,
     type LucideIcon,}
     from "lucide-react";
 
@@ -20,6 +21,7 @@ export const dashboardNavGroups: DashboardNavGroup[] = [{
 
     label: "Workspace",
     items: [
+
         {
 
             title: "Overview",
@@ -39,6 +41,12 @@ export const dashboardNavGroups: DashboardNavGroup[] = [{
 },{
     label: "Account",
     items: [
+        {
+            title: "Profile",
+            href: "/dashboard/profile",
+            icon: UserRound,
+
+        },
         {
             title: "Settings",
             href: "/dashboard/settings",

@@ -21,21 +21,29 @@ export function RepoDashboard() {
   const [visibility, setVisibility] = useState<"all" | "public" | "private">("all");
 
   const repositories = useMemo(() => reposQuery.data ?? [], [reposQuery.data]);
-  const filtered = useMemo(() => {
+  const matchingRepositories = useMemo(() => {
     const query = search.trim().toLowerCase();
     return repositories.filter((repo) => {
       if (status !== "ALL" && repo.indexStatus !== status) return false;
-      if (visibility === "private" && !repo.isPrivate) return false;
-      if (visibility === "public" && repo.isPrivate) return false;
       if (!query) return true;
       return [repo.fullName, repo.description ?? "", repo.language ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(query);
     });
-  }, [repositories, search, status, visibility]);
+  }, [repositories, search, status]);
+
+  const filtered = useMemo(() => {
+    return matchingRepositories.filter((repo) => {
+      if (visibility === "private") return repo.isPrivate;
+      if (visibility === "public") return !repo.isPrivate;
+      return true;
+    });
+  }, [matchingRepositories, visibility]);
 
   const readyCount = repositories.filter((repo) => repo.indexStatus === "READY").length;
+  const publicCount = matchingRepositories.filter((repo) => !repo.isPrivate).length;
+  const privateCount = matchingRepositories.filter((repo) => repo.isPrivate).length;
 
   return (
     <div className="flex min-h-full w-full min-w-0 flex-col overflow-x-hidden">
@@ -48,14 +56,16 @@ export function RepoDashboard() {
         onStatusChange={setStatus}
         totalCount={repositories.length}
         readyCount={readyCount}
+        publicCount={publicCount}
+        privateCount={privateCount}
         onSync={() => refresh.mutate()}
-        isSyncing={refresh.isPending || reposQuery.isFetching}
+        isSyncing={refresh.isPending}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-6 overflow-x-hidden bg-muted/20 p-4 md:p-8">
         {reposQuery.isLoading && (
           <div className="mx-auto grid w-full max-w-[1600px] min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
             {Array.from({ length: 6 }, (_, index) => (
-              <Skeleton key={index} className="h-80 rounded-3xl" />
+              <Skeleton key={index} className="h-[23rem] rounded-2xl" />
             ))}
           </div>
         )}

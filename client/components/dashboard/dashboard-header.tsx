@@ -19,6 +19,8 @@ export function DashboardHeader(props: {
   onStatusChange: (value: FilterStatus) => void;
   totalCount: number;
   readyCount: number;
+  publicCount: number;
+  privateCount: number;
   onSync: () => void;
   isSyncing: boolean;
 }) {
@@ -86,8 +88,8 @@ export function DashboardHeader(props: {
               value={props.visibility}
               options={[
                 ["all", "All"],
-                ["public", "Public"],
-                ["private", "Private"],
+                ["public", `Public (${props.publicCount})`],
+                ["private", `Private (${props.privateCount})`],
               ]}
               onChange={props.onVisibilityChange}
             />

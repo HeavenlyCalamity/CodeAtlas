@@ -1,0 +1,28 @@
+@import "streamdown/styles.css";
+
+.chat-markdown {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.chat-markdown :where(h1, h2, h3, h4) {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  letter-spacing: -0.02em;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.chat-markdown :where(p, ul, ol, blockquote, table) {
+  margin-block: 0.55rem;
+}
+
+.chat-markdown :where(pre, [data-code-block-container]) {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-markdown * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

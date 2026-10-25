@@ -20,6 +20,7 @@ export function useCurrentUser() {
     return useQuery({
         queryKey: ["currentUser"],
         retry: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes — prevents refetch loops on login page
         queryFn: async () => {
             try {
                 const user = await api.me();

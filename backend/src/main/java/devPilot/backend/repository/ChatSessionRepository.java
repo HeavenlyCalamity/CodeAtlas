@@ -12,5 +12,7 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> 
     List<ChatSession> findByUserIdAndRepositoryIdOrderByCreatedAtDesc(UUID userId, UUID
             repositoryId);
 
+    List<ChatSession> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
     Optional<ChatSession> findByIdAndUserId(UUID id, UUID userId);
 }

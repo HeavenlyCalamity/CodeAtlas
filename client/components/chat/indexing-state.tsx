@@ -4,22 +4,22 @@ import { AlertCircle, Loader2, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
-    Empty,
-    EmptyDescription,
-    EmptyHeader,
-    EmptyMedia,
-    EmptyTitle,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
 import { getRepoProgress, useStartIndexing } from "@/hooks/use-repo";
-import type { IndexStatusresponse, Repository } from "@/lib/api";
+import type { IndexStatusResponse, Repository } from "@/lib/api";
 
 export function IndexingState({
   repo,
   status,
 }: {
   repo: Repository;
-  status?: IndexStatusresponse;
+  status?: IndexStatusResponse;
 }) {
   const indexMutation = useStartIndexing();
   const filesProcessed = status?.filesProcessed ?? repo.filesProcessed;
@@ -38,8 +38,7 @@ export function IndexingState({
           </EmptyMedia>
           <EmptyTitle>Indexing failed</EmptyTitle>
           <EmptyDescription>
-            {errorMessage ||
-              "Something went wrong while indexing this repository."}
+            {errorMessage || "Something went wrong while indexing this repository."}
           </EmptyDescription>
         </EmptyHeader>
         <Button
@@ -48,6 +47,28 @@ export function IndexingState({
         >
           <RotateCcw data-icon="inline-start" />
           Retry indexing
+        </Button>
+      </Empty>
+    );
+  }
+
+  if (indexStatus === "PENDING") {
+    return (
+      <Empty className="h-full border-0">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Loader2 />
+          </EmptyMedia>
+          <EmptyTitle>Indexing has not started</EmptyTitle>
+          <EmptyDescription>
+            {repo.fullName} needs to be indexed before DevPilot can answer questions about it.
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button
+          onClick={() => indexMutation.mutate(repo.id)}
+          disabled={indexMutation.isPending}
+        >
+          Start indexing
         </Button>
       </Empty>
     );
@@ -62,14 +83,18 @@ export function IndexingState({
         <EmptyTitle>Indexing {repo.fullName}</EmptyTitle>
         <EmptyDescription>
           {filesTotal > 0
-            ? `${filesProcessed} of ${filesTotal} files - ${chunkCount} chunks embedded`
+            ? `${filesProcessed} of ${filesTotal} files · ${chunkCount} chunks embedded`
             : "Fetching repository files and preparing embeddings..."}
         </EmptyDescription>
       </EmptyHeader>
       <div className="w-full max-w-sm space-y-2">
-        <Progress value={Math.max(progress, filesTotal ? progress : 12)} />
+        {filesTotal > 0 ? (
+          <Progress value={progress} />
+        ) : (
+          <Progress value={null} />
+        )}
         <p className="text-center text-xs text-muted-foreground">
-          You can leave this page open - chat unlocks when indexing finishes.
+          Chat unlocks when indexing finishes. You can leave this page open.
         </p>
       </div>
     </Empty>

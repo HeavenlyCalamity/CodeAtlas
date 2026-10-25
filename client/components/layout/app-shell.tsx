@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
 
 import { DevPilotIcon } from "@/components/icons/devpilot-icon";
 import { useLogout, useCurrentUser } from "@/hooks/use-auth";
@@ -12,6 +12,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -42,6 +43,8 @@ type AppShellProps = {
     description?: string;
     actions?: React.ReactNode;
     hideHeader?: boolean;
+    contentClassName?: string;
+    className?: string;
 };
 
 export function AppShell({
@@ -50,6 +53,8 @@ export function AppShell({
     description,
     actions,
     hideHeader = false,
+    contentClassName,
+    className,
 }: AppShellProps) {
     const pathname = usePathname();
     const { data: user } = useCurrentUser();
@@ -63,7 +68,7 @@ export function AppShell({
             .toUpperCase() ?? "U";
 
     return (
-        <SidebarProvider>
+        <SidebarProvider className={className}>
             <Sidebar variant="inset" collapsible="icon">
                 <SidebarHeader>
                     <SidebarMenu>
@@ -151,9 +156,22 @@ export function AppShell({
                                     align="start"
                                     className="min-w-56"
                                 >
-                                    <DropdownMenuLabel>
-                                        {user?.displayName ?? "Account"}
-                                    </DropdownMenuLabel>
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuLabel>
+                                            {user?.displayName ?? "Account"}
+                                        </DropdownMenuLabel>
+                                    <DropdownMenuItem
+                                        render={<Link href="/dashboard/profile" />}
+                                    >
+                                        <UserRound />
+                                        Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        render={<Link href="/dashboard/settings" />}
+                                    >
+                                        <Settings />
+                                        Settings
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         disabled={logout.isPending}
@@ -162,14 +180,15 @@ export function AppShell({
                                         <LogOut />
                                         {logout.isPending ? "Signing out..." : "Sign out"}
                                     </DropdownMenuItem>
-                                </DropdownMenuContent>
+                                </DropdownMenuGroup>
+                            </DropdownMenuContent>
                             </DropdownMenu>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>
             </Sidebar>
 
-            <SidebarInset>
+            <SidebarInset className="h-full min-h-0 overflow-hidden">
                 {!hideHeader && (
                     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
                         <SidebarTrigger className="-ml-1" />
@@ -192,7 +211,12 @@ export function AppShell({
                         </div>
                     </header>
                 )}
-                <main className={cn("flex min-h-0 flex-1 flex-col", !hideHeader && "p-4")}>
+                <main
+                    className={cn(
+                        "flex min-h-0 flex-1 flex-col overflow-hidden",
+                        contentClassName ?? (!hideHeader && "p-4"),
+                    )}
+                >
                     {children}
                 </main>
             </SidebarInset>

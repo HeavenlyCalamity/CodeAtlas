@@ -9,7 +9,11 @@ import { queryKeys } from "@/lib/query-keys";
 const INDEXING_POLL_MS = 2_000;
 
 function hasIndexingRepos(repos: Repository[] | undefined) {
-  return repos?.some((repo) => repo.indexStatus === "INDEXING") ?? false;
+  return (
+    repos?.some(
+      (repo) => repo.indexStatus === "PENDING" || repo.indexStatus === "INDEXING",
+    ) ?? false
+  );
 }
 
 function updateRepoInListCache(
@@ -42,7 +46,10 @@ export function useRepository(repoId: string) {
     queryFn: () => api.getRepo(repoId),
     enabled: Boolean(repoId),
     refetchInterval: (query) =>
-      query.state.data?.indexStatus === "INDEXING" ? INDEXING_POLL_MS : false,
+      query.state.data?.indexStatus === "PENDING" ||
+      query.state.data?.indexStatus === "INDEXING"
+        ? INDEXING_POLL_MS
+        : false,
   });
 }
 
@@ -52,7 +59,10 @@ export function useIndexStatus(repoId: string, enabled = false) {
     queryFn: () => api.indexStatus(repoId),
     enabled: Boolean(repoId) && enabled,
     refetchInterval: (query) =>
-      query.state.data?.indexStatus === "INDEXING" ? 1_500 : false,
+      query.state.data?.indexStatus === "PENDING" ||
+      query.state.data?.indexStatus === "INDEXING"
+        ? 1_500
+        : false,
   });
 }
 
@@ -93,6 +103,9 @@ export function useRefreshRepos() {
     mutationFn: () => api.listRepos(true),
     onSuccess: (repos) => {
       queryClient.setQueryData(queryKeys.repos.list(), repos);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.repos.list(),
+      });
       toast.add({
         title: "Sync successful",
         description: `${repos.length} repositories loaded`,
@@ -102,6 +115,38 @@ export function useRefreshRepos() {
     onError: (error: Error) => {
       toast.add({
         title: "Sync failed",
+        description: error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useImportRepo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (url: string) => api.importRepo(url),
+    onSuccess: (repo) => {
+      queryClient.setQueryData<Repository[]>(
+        queryKeys.repos.list(),
+        (current) => {
+          const withoutImported = current?.filter((item) => item.id !== repo.id) ?? [];
+          return [...withoutImported, repo].sort((a, b) =>
+            a.fullName.localeCompare(b.fullName),
+          );
+        },
+      );
+      queryClient.setQueryData(queryKeys.repos.detail(repo.id), repo);
+      toast.add({
+        title: "Repository added",
+        description: `${repo.fullName} is now available in your workspace.`,
+        type: "success",
+      });
+    },
+    onError: (error: Error) => {
+      toast.add({
+        title: "Could not add repository",
         description: error.message,
         type: "error",
       });

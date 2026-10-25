@@ -46,6 +46,35 @@ public class GithubApiClient {
         return all;
     }
 
+    public Map<String, Object> getUserProfile(String accessToken) {
+        return client(accessToken)
+                .get()
+                .uri("/user")
+                .retrieve()
+                .body(MAP);
+    }
+
+    public List<Map<String, Object>> listRecentRepos(String accessToken) {
+        return client(accessToken)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/user/repos")
+                        .queryParam("sort", "updated")
+                        .queryParam("direction", "desc")
+                        .queryParam("per_page", 6)
+                        .build())
+                .retrieve()
+                .body(LIST_MAP);
+    }
+
+    public Map<String, Object> getRepository(String accessToken, String owner, String repo) {
+        return client(accessToken)
+                .get()
+                .uri("/repos/{owner}/{repo}", owner, repo)
+                .retrieve()
+                .body(MAP);
+    }
+
     public Map<String, Object> getRepoTree(String accessToken, String owner, String repo, String branch) {
         return client(accessToken)
                 .get()
@@ -54,12 +83,13 @@ public class GithubApiClient {
                 .body(MAP);
     }
 
-    public String getFileContent(String accessToken, String owner, String repo, String path) {
+    public String getFileContent(String accessToken, String owner, String repo, String path, String branch) {
         Map<String, Object> body = client(accessToken)
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/repos/{owner}/{repo}/contents/")
                         .path(path)
+                        .queryParam("ref", branch)
                         .build(owner, repo))
                 .retrieve()
                 .body(MAP);

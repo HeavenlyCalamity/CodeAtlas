@@ -1,4 +1,8 @@
-package devPilot.backend. services.ai;
+package devPilot.backend.services.ai;
+
+import java.util.LinkedHashMap;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -7,9 +11,6 @@ import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,15 +35,23 @@ public class CodeContextRetriever {
 
         var citations = documents.stream()
                 .map(citationMapper::fromDocument)
-                .distinct()
+                .filter(citation -> citation.filePath() != null && !citation.filePath().isBlank())
+                .collect(Collectors.toMap(
+                        citation -> citation.filePath() + ":" + citation.startLine(),
+                        citation -> citation,
+                        (first, ignored) -> first,
+                        LinkedHashMap::new))
+                .values()
+                .stream()
+                .limit(8)
                 .toList();
+
         var contextText = documents.stream()
                 .map(Document::getText)
-                .collect(Collectors.joining("\n\n --- \n\n"));
+                .collect(Collectors.joining("\n\n---\n\n"));
 
         if (contextText.isBlank()) {
             contextText = NO_MATCHES;
-
         }
 
         return new RetrievedContext(citations, contextText);

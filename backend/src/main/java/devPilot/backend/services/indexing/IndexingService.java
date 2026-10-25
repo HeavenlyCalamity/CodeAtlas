@@ -68,8 +68,28 @@ public class IndexingService {
         } catch (
                 Exception e) {
             log.error("Error during indexing for repoId: {}, userId: {}", repoId, userId, e);
-            markFailed(repoId, e.getMessage());
+            markFailed(repoId, readableIndexingError(e));
         }
+    }
+
+    private String readableIndexingError(Exception error) {
+        String message = error.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Indexing failed while reading the repository from GitHub.";
+        }
+        if (message.contains("end of life")
+                || message.contains("embedding")
+                || message.contains("NVIDIA embedding")) {
+            return "Indexing failed because the configured NVIDIA embedding model is unavailable. "
+                    + "Set NVIDIA_EMBEDDING_MODEL to a supported NVIDIA embedding model and restart the backend.";
+        }
+        if (message.contains("404")) {
+            return "GitHub could not find this repository or its default branch. Refresh repositories and try again.";
+        }
+        if (message.length() > 500) {
+            return message.substring(0, 500);
+        }
+        return message;
     }
 
     private void doIndex(UUID repoId, UUID userId) {
@@ -93,12 +113,12 @@ public class IndexingService {
         for (String path : filePaths) {
             try {
                 String content = gitHubApiClient.getFileContent(
-                        token, repo.getOwner(), repo.getName(), path);
+                        token, repo.getOwner(), repo.getName(), path, repo.getDefaultBranch());
                 List<Document> chunks = codeChunker.chunkFile(repoId.toString(), path, content);
                 batch.addAll(chunks);
                 totalChunks += chunks.size();
                 if (batch.size() >= VECTOR_BATCH_SIZE) {
-                    vectorStore.add(batch);
+                    addEmbeddings(batch);
                     batch.clear();
                 }
             } catch (Exception ex) {
@@ -112,9 +132,18 @@ public class IndexingService {
             githubRateLimiter.pause();
         }
         if (!batch.isEmpty()) {
-            vectorStore.add(batch);
+            addEmbeddings(batch);
         }
         markReady(repoId, filePaths.size(), processed, totalChunks, null);
+    }
+
+    private void addEmbeddings(List<Document> documents) {
+        try {
+            vectorStore.add(documents);
+        } catch (RuntimeException ex) {
+            throw new IllegalStateException("NVIDIA embedding request failed: "
+                    + (ex.getMessage() == null ? "provider returned an error" : ex.getMessage()), ex);
+        }
     }
 
     @SuppressWarnings(("unchecked"))
