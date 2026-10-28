@@ -3,6 +3,8 @@
 .chat-markdown {
   font-size: 0.9375rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .chat-markdown :where(h1, h2, h3, h4) {
@@ -18,6 +20,22 @@
 
 .chat-markdown :where(pre, [data-code-block-container]) {
   font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Streaming mode fixes */
+.chat-markdown[data-streaming="true"] {
+  min-height: 1.5em;
+}
+
+.chat-markdown[data-streaming="true"] :where(p, div, span) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Prevent layout shift during streaming */
+.chat-markdown[data-streaming="true"] [data-code-block-container] {
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

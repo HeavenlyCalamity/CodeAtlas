@@ -105,6 +105,7 @@ export type ChatStreamMode = "send" | "resubmit" | "regenerate";
 export function useStreamChat(sessionId: string | null, repositoryId?: string) {
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [streamThinking, setStreamThinking] = useState("");
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const generationRef = useRef(0);
@@ -135,6 +136,7 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
       abortRef.current = controller;
       setStreaming(true);
       setStreamText("");
+      setStreamThinking("");
       setStreamStatus("Preparing response...");
 
       const isCurrent = () =>
@@ -173,7 +175,21 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
           );
         },
         onToken: (token) => {
-          if (isCurrent()) setStreamText((current) => current + token);
+                  if (isCurrent()) {
+                    setStreamText((current) => {
+                      // Ensure proper spacing between tokens
+                      // If current text ends with a word character and token starts with a word character, add a space
+                      if (current.length > 0 && /[\w)]$/.test(current) && /^[\w(]/.test(token)) {
+                        return current + " " + token;
+                      }
+                      return current + token;
+                    });
+                  }
+                },
+        onThinking: (thinking) => {
+          if (isCurrent()) {
+            setStreamThinking((current) => current + thinking);
+          }
         },
         onStatus: (status) => {
           if (isCurrent()) setStreamStatus(status);
@@ -225,6 +241,7 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
           abortRef.current = null;
           setStreaming(false);
           setStreamText("");
+          setStreamThinking("");
           setStreamStatus(null);
         }
       }
@@ -285,7 +302,7 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
     setStreamStatus(null);
   }, []);
 
-  return { send, resubmit, regenerate, stop, streaming, streamText, streamStatus };
+  return { send, resubmit, regenerate, stop, streaming, streamText, streamThinking, streamStatus };
 }
 
 function userFacingError(error: unknown) {

@@ -19,6 +19,7 @@ public class CodeContextRetriever {
 
     private final VectorStore vectorStore;
     private final CitationMapper citationMapper;
+    private final RagSettings ragSettings;
 
     public RetrievedContext retrieve(UUID repositoryId, String question) {
         var filter = new FilterExpressionBuilder()
@@ -27,7 +28,7 @@ public class CodeContextRetriever {
 
         var search = SearchRequest.builder()
                 .query(question)
-                .topK(RagSettings.TOP_K_CHUNKS)
+                .topK(ragSettings.getTopKChunks())
                 .filterExpression(filter)
                 .build();
 
@@ -43,7 +44,7 @@ public class CodeContextRetriever {
                         LinkedHashMap::new))
                 .values()
                 .stream()
-                .limit(8)
+                .limit(12)
                 .toList();
 
         var contextText = documents.stream()

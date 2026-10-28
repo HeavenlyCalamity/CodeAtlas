@@ -49,7 +49,7 @@ public class ChatService {
         Repository repo = requireReadyRepository(request.repositoryId(), userId);
         String title = request.title() != null && !request.title().isBlank()
                 ? request.title().trim()
-                : "New chat";
+                    : repo.getName();
         ChatSession session = ChatSession.builder()
                 .userId(userId)
                 .repositoryId(repo.getId())
@@ -207,20 +207,19 @@ public class ChatService {
     }
 
     private void maybeTitleFromFirstMessage(
-            ChatSession session, List<ChatMessage> previousMessages, String content) {
-        if (!previousMessages.isEmpty()) {
-            return;
+                ChatSession session, List<ChatMessage> previousMessages, String content) {
+            if (!previousMessages.isEmpty()) {
+                return;
+            }
+            if (session.getTitle() != null
+                    && !session.getTitle().isBlank()
+                    && !"New chat".equals(session.getTitle())) {
+                return;
+            }
+            String compact = content.trim().replaceAll("\\s+", " ");
+            session.setTitle(compact.length() > 72 ? compact.substring(0, 72).trim() + "…" : compact);
+            chatSessionRepository.save(session);
         }
-        if (session.getTitle() != null
-                && !session.getTitle().isBlank()
-                && !"New chat".equals(session.getTitle())
-                && !session.getTitle().startsWith("Chat with ")) {
-            return;
-        }
-        String compact = content.trim().replaceAll("\\s+", " ");
-        session.setTitle(compact.length() > 72 ? compact.substring(0, 72).trim() + "…" : compact);
-        chatSessionRepository.save(session);
-    }
 
     private Repository requireReadyRepository(UUID repositoryId, UUID userId) {
         Repository repo = repoService.requireOwned(repositoryId, userId);

@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Building2,
   Calendar,
+  Clock,
   FileCode,
   Globe,
   GitBranch,
@@ -27,6 +28,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import type { ReactNode } from "react";
 
@@ -49,6 +53,37 @@ import { useGithubProfile } from "@/hooks/use-github-profile";
 import { getGithubLoginUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { GithubProfile, GithubRepoSummary } from "@/lib/api";
+
+const LANGUAGE_COLORS: Record<string, string> = {
+  JavaScript: "#f7df1e",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  Java: "#b07219",
+  Go: "#00ADD8",
+  Rust: "#dea584",
+  Cpp: "#00599C",
+  C: "#555555",
+  CSharp: "#68217A",
+  PHP: "#4F5D95",
+  Ruby: "#701516",
+  Swift: "#FFAC45",
+  Kotlin: "#F18E33",
+  Dart: "#00B4AB",
+  Scala: "#DC322F",
+  Haskell: "#5E5086",
+  Lua: "#000080",
+  Perl: "#0298c3",
+  R: "#198CE7",
+  Shell: "#89e051",
+  SQL: "#e38c00",
+  HTML: "#e34c26",
+  CSS: "#264de4",
+};
+
+function getLanguageColor(language: string | null | undefined) {
+  if (!language) return "#94a3b8";
+  return LANGUAGE_COLORS[language] ?? "#94a3b8";
+}
 
 function timeAgo(iso: string | null) {
   if (!iso) return "—";
@@ -204,12 +239,12 @@ function RepoRow({ repo }: { repo: GithubRepoSummary }) {
           </span>
           <span className="flex items-center gap-1 text-muted-foreground">
             <svg className="size-3.5" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M2 2.5A.25.25 0 0 1 2.25 2H14a.25.25 0 0 1 .143.353l-2 5A.25.25 0 0 1 11.75 9H7.25l-2-5A.25.25 0 0 1 5.25 2H2z" clip-rule="evenodd" />
+              <path fillRule="evenodd" d="M2 2.5A.25.25 0 0 1 2.25 2H14a.25.25 0 0 1 .143.353l-2 5A.25.25 0 0 1 11.75 9H7.25l-2-5A.25.25 0 0 1 5.25 2H2z" clipRule="evenodd" />
             </svg>{forks.toLocaleString()}
           </span>
           <span className="flex items-center gap-1 text-muted-foreground ml-auto">
             <svg className="size-3.5" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M9 3.5a1.5 1.5 0 0 0-1 1.318V7h2V4.818A1.5 1.5 0 0 0 9 3.5zM8 1a.5.5 0 0 1 .5.5V2h3.5A.5.5 0 0 1 12 2v3.5a.5.5 0 0 1-1 0V3H7v2.5a.5.5 0 0 1-1 0V2H5V1.5A.5.5 0 0 1 5.5 1zM5.5 10a.5.5 0 0 1 .5.5h3a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z" clip-rule="evenodd" />
+              <path fillRule="evenodd" d="M9 3.5a1.5 1.5 0 0 0-1 1.318V7h2V4.818A1.5 1.5 0 0 0 9 3.5zM8 1a.5.5 0 0 1 .5.5V2h3.5A.5.5 0 0 1 12 2v3.5a.5.5 0 0 1-1 0V3H7v2.5a.5.5 0 0 1-1 0V2H5V1.5A.5.5 0 0 1 5.5 1zM5.5 10a.5.5 0 0 1 .5.5h3a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z" clipRule="evenodd" />
             </svg>{issues.toLocaleString()}
           </span>
           <Badge variant={repo.isPrivate ? "destructive" : "secondary"} className="shrink-0">{repo.isPrivate ? "Private" : "Public"}</Badge>
@@ -266,6 +301,156 @@ function RepoStarsChart({ repos }: { repos: GithubRepoSummary[] }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Language breakdown pie chart                                      */
+/* ------------------------------------------------------------------ */
+function LanguageBreakdownChart({ repos }: { repos: GithubRepoSummary[] }) {
+  const languageCounts: Record<string, number> = {};
+  repos.forEach((repo) => {
+    if (repo.language) {
+      languageCounts[repo.language] = (languageCounts[repo.language] ?? 0) + 1;
+    }
+  });
+
+  const data = Object.entries(languageCounts).map(([name, count]) => ({
+    name,
+    value: count,
+    color: getLanguageColor(name),
+  }));
+
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Languages</CardTitle>
+          <CardDescription>No language data available yet.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
+            No repositories with language data.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Languages used</CardTitle>
+        <CardDescription>Breakdown across your recent repositories.</CardDescription>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="grid items-center gap-4 md:grid-cols-2">
+          <div className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip />
+                <Pie
+                  data={data}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  label
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2">
+            {data.map((entry) => (
+              <div
+                key={entry.name}
+                className="flex items-center gap-2 text-sm"
+              >
+                <span
+                  className="size-3 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="font-medium">{entry.name}</span>
+                <span className="ml-auto text-muted-foreground">
+                  {entry.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Activity feed (simulated from repo data)                          */
+/* ------------------------------------------------------------------ */
+function ActivityFeed({ repos }: { repos: GithubRepoSummary[] }) {
+  const activities = repos
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
+    )
+    .slice(0, 6)
+    .map((repo) => ({
+      action: repo.description ? "Updated" : "Pushed",
+      repo: repo.name,
+      time: timeAgo(repo.updatedAt),
+      isPrivate: repo.isPrivate,
+    }));
+
+  if (activities.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent activity</CardTitle>
+          <CardDescription>Your latest GitHub activity will appear here.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
+            No recent activity.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent activity</CardTitle>
+        <CardDescription>Your latest repository updates.</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border/50">
+          {activities.map((activity, idx) => (
+            <div key={idx} className="flex items-center gap-3 px-5 py-4">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted/40 text-muted-foreground">
+                <GitBranch className="size-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {activity.action} <span className="text-primary">{activity.repo}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">{activity.time}</p>
+              </div>
+              <Badge variant={activity.isPrivate ? "destructive" : "secondary"} className="shrink-0">
+                {activity.isPrivate ? "Private" : "Public"}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Skeleton loading state                                            */
 /* ------------------------------------------------------------------ */
 function ProfileSkeleton() {
@@ -309,7 +494,11 @@ function GithubErrorBanner({
           <div>
             <CardTitle>GitHub profile unavailable</CardTitle>
             <CardDescription className="mt-1">
-              {isAuthError ? "Your GitHub access token is invalid or expired. Reconnect to load your GitHub stats and repositories." : error instanceof Error ? error.message : "Unexpected error loading GitHub data."}
+              {isAuthError
+                ? "Your GitHub access token is invalid or expired. Reconnect to load your GitHub stats and repositories."
+                : error instanceof Error
+                ? error.message
+                : "Unexpected error loading GitHub data."}
             </CardDescription>
           </div>
         </div>
@@ -368,6 +557,7 @@ export function ProfileDashboard() {
   const htmlUrl = github?.htmlUrl ?? null;
   const recentRepos = github?.recentRepos ?? [];
   const totalStars = recentRepos.reduce((sum, r) => sum + (r.stargazersCount ?? 0), 0);
+  const totalForks = recentRepos.reduce((sum, r) => sum + (r.forksCount ?? 0), 0);
 
   const filledFields = [bio, company, location, blog, email, twitter, github?.name].filter(Boolean).length;
   const profileCompletion = Math.round((filledFields / 7) * 100);
@@ -388,6 +578,7 @@ export function ProfileDashboard() {
 
       {(!isInitialLoading || user || github) && (
         <>
+          {/* Hero */}
           <Card className="overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent -z-10" />
             <div className="bg-gradient-to-br from-primary/15 via-primary/5 to-transparent px-6 py-8 md:px-10 md:py-12">
@@ -411,7 +602,7 @@ export function ProfileDashboard() {
                   </Link>
                 )}
               </div>
-              {bio && <p className="mt-5 text-sm leading-relaxed text-muted-foreground italic">"{bio}"</p>}
+              {bio && <p className="mt-5 text-sm leading-relaxed text-muted-foreground italic">&ldquo;{bio}&rdquo;</p>}
               <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 {company && (
                   <span className="flex items-center gap-1.5">
@@ -438,8 +629,8 @@ export function ProfileDashboard() {
             <CardContent className="grid gap-3 p-6 md:grid-cols-4 md:p-10">
               <StatCard icon={<GitBranch className="text-primary" />} label="Public repositories" value={publicRepos.toLocaleString()} />
               <StatCard icon={<Star className="text-yellow-500" />} label="Stars (recent repos)" value={totalStars.toLocaleString()} trend={recentRepos.length ? `across ${recentRepos.length} repos` : "—"} />
+              <StatCard icon={<Star className="text-gray-400" />} label="Forks (recent repos)" value={totalForks.toLocaleString()} />
               <StatCard icon={<UserRound className="text-primary" />} label="Followers" value={followers.toLocaleString()} />
-              <StatCard icon={<UserRound className="text-muted-foreground" />} label="Following" value={following.toLocaleString()} />
             </CardContent>
           </Card>
 
@@ -450,6 +641,7 @@ export function ProfileDashboard() {
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
+              {/* About */}
               <Card>
                 <CardHeader>
                   <CardTitle>About</CardTitle>
@@ -502,6 +694,7 @@ export function ProfileDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Account */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between gap-3">
                   <div>
@@ -517,7 +710,14 @@ export function ProfileDashboard() {
                 </CardContent>
               </Card>
 
-              <RepoStarsChart repos={recentRepos} />
+              {/* Charts row */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <RepoStarsChart repos={recentRepos} />
+                <LanguageBreakdownChart repos={recentRepos} />
+              </div>
+
+              {/* Activity */}
+              <ActivityFeed repos={recentRepos} />
             </TabsContent>
 
             <TabsContent value="repositories" className="mt-6">
@@ -561,6 +761,7 @@ export function ProfileDashboard() {
             <GithubErrorBanner error={githubErrorData} onRefresh={handleRefresh} onReconnect={handleReconnect} />
           )}
 
+          {/* Connected account */}
           <Card className="overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent -z-10" />
             <CardHeader>

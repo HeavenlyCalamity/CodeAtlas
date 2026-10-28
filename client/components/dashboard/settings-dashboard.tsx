@@ -39,10 +39,13 @@ export function SettingsDashboard() {
   const [restoreHistory, setRestoreHistory] = useState(true);
 
   useEffect(() => {
-    setEnterToSend(localStorage.getItem("devpilot:enter-to-send") !== "false");
-    setCompactMode(localStorage.getItem("devpilot:compact-mode") === "true");
-    setRestoreHistory(localStorage.getItem("devpilot:restore-history") !== "false");
-  }, []);
+      // Defer state updates to avoid synchronous setState in effect
+      setTimeout(() => {
+        setEnterToSend(localStorage.getItem("devpilot:enter-to-send") !== "false");
+        setCompactMode(localStorage.getItem("devpilot:compact-mode") === "true");
+        setRestoreHistory(localStorage.getItem("devpilot:restore-history") !== "false");
+      }, 0);
+    }, []);
 
   const savePreference = (key: string, value: boolean, setter: (value: boolean) => void) => {
     setter(value);

@@ -3,6 +3,7 @@ import { ApiError, getApiBaseUrl, type ChatMessage } from "@/lib/api";
 export type StreamChatHandlers = {
   onUserMessage?: (message: ChatMessage) => void;
   onToken?: (token: string) => void;
+  onThinking?: (thinking: string) => void;
   onAssistantMessage?: (message: ChatMessage) => void;
   onDone?: () => void;
   onStatus?: (status: string) => void;
@@ -70,10 +71,10 @@ async function consumeChatStream(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let sawDone = false;
-  let sawError = false;
-  let streamError: Error | null = null;
-  const streamHandlers: StreamChatHandlers = {
+    let sawDone = false;
+    let sawError = false;
+    let streamError: Error | null = null;
+    const streamHandlers: StreamChatHandlers = {
     ...handlers,
     onError: (error) => {
       streamError = error;
@@ -127,7 +128,11 @@ function dispatchEvent(part: string, handlers: StreamChatHandlers): "done" | "er
   if (event === "status") {
     handlers.onStatus?.(typeof parsed === "string" ? parsed : String(parsed));
   } else if (event === "token") {
-    handlers.onToken?.(typeof parsed === "string" ? parsed : String(parsed));
+    const token = typeof parsed === "string" ? parsed : String(parsed);
+    handlers.onToken?.(token);
+  } else if (event === "thinking") {
+    const thinking = typeof parsed === "string" ? parsed : String(parsed);
+    handlers.onThinking?.(thinking);
   } else if (event === "user_message") {
     handlers.onUserMessage?.(parsed as ChatMessage);
   } else if (event === "assistant_message") {

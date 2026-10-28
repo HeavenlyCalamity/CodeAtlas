@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getGithubLoginUrl } from "@/lib/api";
 
-export default function LoginPage() {
+function LoginForm() {
   const params = useSearchParams();
   const router = useRouter();
   const error = params.get("error");
@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   // If the auth query errored (no valid session), show the login form immediately
   if (isError) {
-    return renderLoginForm({ error, next });
+      return renderLoginForm({ error });
   }
 
   // Only show loading spinner while we're still checking auth state
@@ -45,10 +45,22 @@ export default function LoginPage() {
     );
   }
 
-  return renderLoginForm({ error, next });
+    return renderLoginForm({ error });
 }
 
-function renderLoginForm({ error, next }: { error: string | null; next: string }) {
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh items-center justify-center gap-4">
+        <Spinner className="size-8" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function renderLoginForm({ error }: { error: string | null }) {
   return (
     <div className="flex min-h-svh flex-col overflow-hidden bg-background">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(var(from_var(--primary))))]_l_c_h/0.1),transparent_55%" />

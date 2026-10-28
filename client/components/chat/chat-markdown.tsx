@@ -15,7 +15,7 @@ export function ChatMarkdown({
   streaming?: boolean;
 }) {
   return (
-    <div className={cn("chat-markdown min-w-0", className)}>
+    <div className={cn("chat-markdown min-w-0", className)} data-streaming={streaming}>
       <Streamdown
         mode={streaming ? "streaming" : "static"}
         isAnimating={streaming}

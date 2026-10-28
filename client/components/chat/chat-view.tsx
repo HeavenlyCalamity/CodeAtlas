@@ -92,14 +92,17 @@ export function ChatView({ repoId }: { repoId: string }) {
   const historyError = allSessionsQuery.isError && sessionsQuery.isError;
   const sessionId = selectedSessionId;
   const messagesQuery = useChatMessages(sessionId);
-  const { send, resubmit, regenerate, stop, streaming, streamText, streamStatus } =
+  const { send, resubmit, regenerate, stop, streaming, streamText, streamThinking, streamStatus } =
     useStreamChat(sessionId, repoId);
 
   useEffect(() => {
     stop();
-    setSelectedSessionId(null);
-    setSessionIntent("restore");
-  }, [repoId, stop]);
+      // Defer state updates to avoid synchronous setState in effect
+      setTimeout(() => {
+        setSelectedSessionId(null);
+        setSessionIntent("restore");
+      }, 0);
+    }, [repoId, stop]);
 
   useEffect(() => {
     if (!ready || !sessionsQuery.isSuccess || sessionIntent !== "restore") return;
@@ -109,9 +112,12 @@ export function ChatView({ repoId }: { repoId: string }) {
       sessions.find((session) => session.id === fromUrl) ??
       sessions.find((session) => session.id === stored) ??
       null;
-    setSelectedSessionId(match?.id ?? null);
-    setSessionIntent("chosen");
-  }, [ready, repoId, searchParams, sessionIntent, sessions, sessionsQuery.isSuccess]);
+      // Defer state updates to avoid synchronous setState in effect
+      setTimeout(() => {
+        setSelectedSessionId(match?.id ?? null);
+        setSessionIntent("chosen");
+      }, 0);
+    }, [ready, repoId, searchParams, sessionIntent, sessions, sessionsQuery.isSuccess]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -244,21 +250,22 @@ export function ChatView({ repoId }: { repoId: string }) {
                 repo={repo}
                 messages={messagesQuery.data ?? []}
                 streamText={streamText}
-                streamStatus={streamStatus}
-                isLoading={Boolean(sessionId) && messagesQuery.isLoading}
-                error={messagesQuery.isError ? messagesQuery.error : null}
-                onRetry={() => void messagesQuery.refetch()}
-                disabled={streaming}
-                onSuggestion={handleSend}
-                onResubmit={async (message, content) => {
-                  if (sessionId && !message.id.startsWith("pending-")) {
-                    await resubmit(message.id, content, sessionId);
-                  }
-                }}
-                onRegenerate={() => {
-                  if (sessionId) void regenerate(sessionId);
-                }}
-              />
+                              streamThinking={streamThinking}
+                              streamStatus={streamStatus}
+                              isLoading={Boolean(sessionId) && messagesQuery.isLoading}
+                              error={messagesQuery.isError ? messagesQuery.error : null}
+                              onRetry={() => void messagesQuery.refetch()}
+                              disabled={streaming}
+                              onSuggestion={handleSend}
+                              onResubmit={async (message, content) => {
+                                if (sessionId && !message.id.startsWith("pending-")) {
+                                  await resubmit(message.id, content, sessionId);
+                                }
+                              }}
+                              onRegenerate={() => {
+                                if (sessionId) void regenerate(sessionId);
+                              }}
+                            />
               <ChatComposer
                 disabled={!ready}
                 streaming={streaming}
