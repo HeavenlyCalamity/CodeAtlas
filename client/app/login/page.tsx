@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getGithubLoginUrl } from "@/lib/api";
 
-function LoginForm() {
+function LoginFormContent() {
   const params = useSearchParams();
   const router = useRouter();
   const error = params.get("error");
@@ -48,16 +48,20 @@ function LoginForm() {
     return renderLoginForm({ error });
 }
 
-export default function LoginPage() {
+function LoginForm() {
   return (
     <Suspense fallback={
       <div className="flex min-h-svh items-center justify-center gap-4">
         <Spinner className="size-8" />
       </div>
     }>
-      <LoginForm />
+      <LoginFormContent />
     </Suspense>
   );
+}
+
+export default function LoginPage() {
+  return <LoginForm />;
 }
 
 function renderLoginForm({ error }: { error: string | null }) {
