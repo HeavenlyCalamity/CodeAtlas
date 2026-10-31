@@ -4,7 +4,7 @@
 
 DevPilot (the application in this repository, currently named **RepoScanner** on GitHub) connects to GitHub repositories, indexes repository content, and provides a workspace for asking questions about a codebase. The backend uses Spring Boot, Spring AI, PostgreSQL/PGVector, and a configurable NVIDIA-hosted inference API.
 
-- **Repository:** [HeavenlyCalamity/RepoScanner](https://github.com/HeavenlyCalamity/RepoScanner)
+- **Repository:** [HeavenlyCalamity/CodeAtlas](https://github.com/HeavenlyCalamity/CodeAtlas)
 - **Web app:** [heavenlycalamity.tech](https://heavenlycalamity.tech)
 
 > DevPilot is an AI-assisted code exploration project. Model output can be incorrect; verify generated explanations and suggestions against the source code.
