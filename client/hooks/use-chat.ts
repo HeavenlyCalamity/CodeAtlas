@@ -16,7 +16,7 @@ import {
 const SESSION_STORAGE_PREFIX = "devpilot:chat-session:";
 
 export function lastSessionStorageKey(repositoryId: string) {
-  return `${SESSION_STORAGE_PREFIX}${repositoryId}`;
+  return SESSION_STORAGE_PREFIX + repositoryId;
 }
 
 export function useChatSessions(repositoryId: string, enabled = true) {
@@ -175,17 +175,15 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
           );
         },
         onToken: (token) => {
-                  if (isCurrent()) {
-                    setStreamText((current) => {
-                      // Ensure proper spacing between tokens
-                      // If current text ends with a word character and token starts with a word character, add a space
-                      if (current.length > 0 && /[\w)]$/.test(current) && /^[\w(]/.test(token)) {
-                        return current + " " + token;
-                      }
-                      return current + token;
-                    });
-                  }
-                },
+          if (!isCurrent()) return;
+          setStreamText((current) => {
+            // Ensure proper spacing between tokens.
+            if (current.length > 0 && /[\w)]$/.test(current) && /^[\w(]/.test(token)) {
+              return current + " " + token;
+            }
+            return current + token;
+          });
+        },
         onThinking: (thinking) => {
           if (isCurrent()) {
             setStreamThinking((current) => current + thinking);
@@ -226,15 +224,26 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        queryClient.setQueryData<ChatMessage[]>(
-          queryKeys.chat.messages(targetSessionId),
-          (current = []) => current.filter((item) => !item.id.startsWith("pending-")),
-        );
-        toast.add({
-          title: "Chat failed",
-          description: userFacingError(error),
-          type: "error",
-        });
+
+        if (isCurrent()) {
+          queryClient.setQueryData<ChatMessage[]>(
+            queryKeys.chat.messages(targetSessionId),
+            (current = []) => current.filter((item) => !item.id.startsWith("pending-")),
+          );
+
+          // The backend saves any partial assistant response before ending a failed
+          // stream. Refresh history so that message is retained even if its SSE event
+          // was lost when the connection dropped.
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.chat.messages(targetSessionId),
+          });
+
+          toast.add({
+            title: "Chat interrupted",
+            description: userFacingError(error),
+            type: "error",
+          });
+        }
         throw error;
       } finally {
         if (generation === generationRef.current) {
@@ -253,7 +262,7 @@ export function useStreamChat(sessionId: string | null, repositoryId?: string) {
     async (content: string, targetSessionId = sessionId) => {
       if (!targetSessionId || !content.trim() || streaming) return;
       const optimisticMessage: ChatMessage = {
-        id: `pending-${Date.now()}`,
+        id: "pending-" + Date.now(),
         role: "USER",
         content: content.trim(),
         citations: [],
